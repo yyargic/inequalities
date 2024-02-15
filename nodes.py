@@ -86,7 +86,7 @@ class Var(Term):
         return isinstance(other, Var) and self.name == other.name
 
 class Unk(Term):
-    """Unknown place holders"""
+    """Unknown place holders for all terms"""
     
     def __init__(self, name):
         assert isinstance(name, str), "Unk.__init__() takes str"
@@ -94,13 +94,18 @@ class Unk(Term):
         self.name = name
     
     def __repr__(self):
-        return f"Unk('{self.name}')"
+        return f"{self.__class__.__name__}('{self.name}')"
     
     def __str__(self):
         return self.name
     
     def __eq__(self, other):
-        return isinstance(other, Unk) and self.name == other.name
+        return isinstance(other, self.__class__) and self.name == other.name
+
+class Unk_Const(Unk):
+    """Unknown place holders for constants"""
+    def __init__(self, name):
+        super().__init__(name)
 
 class Op(Term):
     """Operations between terms"""
@@ -180,38 +185,3 @@ def Pow(*args):
     return Op('Pow', *wrap(args))
 def Root(*args):
     return Op('Root', *wrap(args))
-
-def pattern_match(term, pattern, subst={}):
-    assert not isinstance(term, Unk), "The first term in pattern_match must not contain Unk instances"
-    if subst is None:
-        return None
-    if term == pattern:
-        return subst
-    if isinstance(pattern, Unk):
-        if pattern.name in subst:
-            return pattern_match(term, subst[pattern.name], subst)
-        else:
-            return {**subst, pattern.name: term}
-    if isinstance(term, Op) and isinstance(pattern, Op):
-        if term.ftype != pattern.ftype:
-            return None
-        if term.ftype_group == 0: # Here, we treat Add and Mul as taking at most 2 ordered arguments
-            if len(term.args) == 0 or len(pattern.args) == 0:
-                if len(term.args) == 0 and len(pattern.args) == 0:
-                    return subst
-                else:
-                    return None
-            if len(term.args) == 1 or len(pattern.args) == 1:
-                if len(term.args) == 1 and len(pattern.args) == 1:
-                    return pattern_match(term.args[0], pattern.args[0], subst)
-                else:
-                    return None
-            subst = pattern_match(term.args[-1], pattern.args[-1], subst)
-            new_term = term.args[0] if len(term.args) == 2 else Op(term.ftype, *term.args[:-1])
-            new_pattern = pattern.args[0] if len(pattern.args) == 2 else Op(pattern.ftype, *pattern.args[:-1])
-            return pattern_match(new_term, new_pattern, subst)
-        else:
-            for term_arg, pattern_arg in zip(term.args, pattern.args):
-                subst = pattern_match(term_arg, pattern_arg, subst)
-            return subst
-    return None
