@@ -129,7 +129,7 @@ class Op(Term):
             case 'Add':
                 lesser_ops = ('Add', 'Sub')
                 if not self.args:
-                    return "0"
+                    return "0_empty"
                 else:
                     return "+".join(f"({arg})" if isinstance(arg, Op) and arg.ftype in lesser_ops else f"{arg}" for arg in self.args)
             case 'Sub':
@@ -141,7 +141,7 @@ class Op(Term):
             case 'Mul':
                 lesser_ops = ('Add', 'Sub', 'Mul', 'Div')
                 if not self.args:
-                    return "1"
+                    return "1_empty"
                 else:
                     return "*".join(f"({arg})" if isinstance(arg, Op) and arg.ftype in lesser_ops else f"{arg}" for arg in self.args)
             case 'Div':
