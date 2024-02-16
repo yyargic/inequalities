@@ -44,11 +44,25 @@ class Term:
         if isinstance(self, Op):
             for arg in self.args:
                 yield from iter(arg)
+    
+    def isinstance_add(self):
+        return isinstance(self, Op) and self.ftype == 'Add'
+    def isinstance_sub(self):
+        return isinstance(self, Op) and self.ftype == 'Sub'
+    def isinstance_mul(self):
+        return isinstance(self, Op) and self.ftype == 'Mul'
+    def isinstance_div(self):
+        return isinstance(self, Op) and self.ftype == 'Div'
+    def isinstance_pow(self):
+        return isinstance(self, Op) and self.ftype == 'Pow'
+    def isinstance_root(self):
+        return isinstance(self, Op) and self.ftype == 'Root'
 
 class Const(Term):
     """Constant real numbers"""
 
     def __init__(self, value):
+        if isinstance(value, complex): raise ArithmeticError("Complex number encountered")
         assert isinstance(value, (int, float)), "Const.__init__() takes int or float"
         super().__init__()
         self.value = value
@@ -163,25 +177,25 @@ class Op(Term):
         else:
             return self.args == other.args
 
-def wrap(x):
+def _wrap(x):
     """This allows easy typing of constants and variables"""
     if isinstance(x, (int, float)):
         return Const(x)
     if isinstance(x, str):
         return Var(x)
     if isinstance(x, tuple):
-        return tuple(wrap(i) for i in x)
+        return tuple(_wrap(i) for i in x)
     return x
 
 def Add(*args):
-    return Op('Add', *wrap(args))
+    return Op('Add', *_wrap(args))
 def Sub(*args):
-    return Op('Sub', *wrap(args))
+    return Op('Sub', *_wrap(args))
 def Mul(*args):
-    return Op('Mul', *wrap(args))
+    return Op('Mul', *_wrap(args))
 def Div(*args):
-    return Op('Div', *wrap(args))
+    return Op('Div', *_wrap(args))
 def Pow(*args):
-    return Op('Pow', *wrap(args))
+    return Op('Pow', *_wrap(args))
 def Root(*args):
-    return Op('Root', *wrap(args))
+    return Op('Root', *_wrap(args))
