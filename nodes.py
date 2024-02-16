@@ -1,7 +1,11 @@
 # Term: Const | Var | Unk | Op
+# Prop: Eq | Le
 
 class Term:
-    """Terms are constants, variables, or the non-evaluating operations between them, e.g., x+1"""
+    """Terms, for example: 15, x, y^2+1"""
+
+    def __init__(self):
+        assert self.__class__ != Term, "The Term class should only be used through its children"
     
     def __add__(self, other):
         return Add(self, other)
@@ -44,7 +48,14 @@ class Term:
         if isinstance(self, Op):
             for arg in self.args:
                 yield from iter(arg)
-    
+
+    def isconst(self):
+        return not any(isinstance(term, (Var, Unk)) for term in self)
+    def hasvar(self):
+        return any(isinstance(term, Var) for term in self)
+    def hasunk(self):
+        return any(isinstance(term, Unk) for term in self)
+
     def isinstance_add(self):
         return isinstance(self, Op) and self.ftype == 'Add'
     def isinstance_sub(self):
@@ -83,6 +94,11 @@ class Const(Term):
     
     def __eq__(self, other):
         return isinstance(other, Const) and self.value == other.value
+    
+    def __lt__(self, other):
+        if not isinstance(other, Const):
+            raise TypeError(f"'<' not supported between instances of 'Const' and '{other.__class__.__name__}'")
+        return self.value < other.value
 
 class Var(Term):
     """Real variables"""
@@ -103,6 +119,11 @@ class Var(Term):
     
     def __eq__(self, other):
         return isinstance(other, Var) and self.name == other.name
+    
+    def __lt__(self, other):
+        if not isinstance(other, Var):
+            raise TypeError(f"'<' not supported between instances of 'Var' and '{other.__class__.__name__}'")
+        return self.name < other.name
 
 class Unk(Term):
     """Unknown place holders for all terms"""
@@ -204,3 +225,47 @@ def Pow(*args):
     return Op('Pow', *_wrap(args))
 def Root(*args):
     return Op('Root', *_wrap(args))
+
+class Prop:
+    """Propositions, for example: x-y=1, 2*x*y<=x^2+y^2"""
+
+    def __init__(self, lhs, rhs):
+        self.lhs, self.rhs = _wrap(lhs), _wrap(rhs)
+        assert self.__class__ != Prop, "The Prop class should only be used through its children"
+        assert isinstance(self.lhs, Term) and isinstance(self.rhs, Term), "Prop.__init__() takes Term"
+    
+    def __repr__(self):
+        return f"{self.__class__.__name__}({repr(self.lhs)}; {repr(self.rhs)})"
+    
+    def __str__(self):
+        relation = {'Eq': '=', 'Le': '<='}[self.__class__.__name__]
+        return str(self.lhs) + relation + str(self.rhs)
+    
+    def __eq__(self, other):
+        if self.__class__ != other.__class__:
+            return False
+        if isinstance(self, Eq):
+            return (self.lhs, self.rhs) == (other.lhs, other.rhs) or (self.lhs, self.rhs) == (other.rhs, other.lhs)
+        if isinstance(self, Le):
+            return (self.lhs, self.rhs) == (other.lhs, other.rhs)
+
+    def __iter__(self):
+        yield from iter(self.lhs)
+        yield from iter(self.rhs)
+    
+    def isconst(self):
+        return not any(isinstance(term, (Var, Unk)) for term in self)
+    def hasvar(self):
+        return any(isinstance(term, Var) for term in self)
+    def hasunk(self):
+        return any(isinstance(term, Unk) for term in self)
+
+class Eq(Prop):
+    """Equality (=) propositions"""
+    def __init__(self, lhs, rhs):
+        super().__init__(lhs, rhs)
+
+class Le(Prop):
+    """Inquality (<=) propositions"""
+    def __init__(self, lhs, rhs):
+        super().__init__(lhs, rhs)
