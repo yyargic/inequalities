@@ -57,6 +57,11 @@ class Term:
         return isinstance(self, Op) and self.ftype == 'Pow'
     def isinstance_root(self):
         return isinstance(self, Op) and self.ftype == 'Root'
+    
+    def isnegative_const(self):
+        return isinstance(self, Const) and self.value < 0
+    def isnegative_sub(self):
+        return self.isinstance_sub() and self.args[0] == Const(0)
 
 class Const(Term):
     """Constant real numbers"""

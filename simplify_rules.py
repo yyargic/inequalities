@@ -39,11 +39,11 @@ rules_eval = (
          lambda t: Mul(*(arg for arg in t.args if arg != Const(1)))),
     Rule(Unk('X') / 1, Unk('X')),
     # Trivial powers
-    Rule(Pow(0, Unk('X')), Const(0)),
+    Rule(Pow(0, Unk('X')), Const(0)), ############################################################### This is buggy, because 0^-1 != 0
     Rule(Pow(1, Unk('X')), Const(1)),
     Rule(Pow(Unk('X'), 0), Const(1)),
     Rule(Pow(Unk('X'), 1), Unk('X')),
-    Rule(Root(0, Unk('X')), Const(0)),
+    Rule(Root(0, Unk('X')), Const(0)), ############################################################### This is buggy for the same reason
     Rule(Root(1, Unk('X')), Const(1)),
     Rule(Root(Unk('X'), 1), Unk('X')),
     # Evaluate operations on constants
@@ -57,6 +57,18 @@ rules_eval = (
     Rule(Unk_Const('X') / Unk_Const('Y'), lambda t: Const(t.args[0].value / t.args[1].value)),
     Rule(Pow(Unk_Const('X'), Unk_Const('Y')), lambda t: Const(t.args[0].value ** t.args[1].value)),
     Rule(Root(Unk_Const('X'), Unk_Const('Y')), lambda t: Const(t.args[0].value ** (1/t.args[1].value))),
+)
+
+rules_neg = (
+    # Multiplication with negative number
+    Rule(lambda t: t.isinstance_mul() and any(arg.isnegative_const() for arg in t.args),
+         lambda t: Mul(*(Const(-arg.value) if arg.isnegative_const() else arg for arg in t.args))
+            if sum(arg.isnegative_const() for arg in t.args) % 2 == 0 else
+            Sub(0, Mul(*(Const(-arg.value) if arg.isnegative_const() else arg for arg in t.args)))),
+    Rule(lambda t: t.isinstance_mul() and any(arg.isnegative_sub() for arg in t.args),
+         lambda t: Mul(*(arg.args[1] if arg.isnegative_sub() else arg for arg in t.args))
+            if sum(arg.isnegative_sub() for arg in t.args) % 2 == 0 else
+            Sub(0, Mul(*(arg.args[1] if arg.isnegative_sub() else arg for arg in t.args)))),
 )
 
 rules_nest = (

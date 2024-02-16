@@ -89,4 +89,4 @@ def apply_rules(term, rules):
     return term
 
 def simplify(term):
-    return apply_rules(term, rules_syntax + rules_eval + rules_nest)
+    return apply_rules(term, rules_syntax + rules_eval + rules_neg + rules_nest)
