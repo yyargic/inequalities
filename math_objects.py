@@ -69,9 +69,9 @@ class Term:
     def isinstance_root(self):
         return isinstance(self, Op) and self.ftype == 'Root'
     
-    def isnegative_const(self):
+    def isneg_const(self):
         return isinstance(self, Const) and self.value < 0
-    def isnegative_sub(self):
+    def isneg_sub(self):
         return self.isinstance_sub() and self.args[0] == Const(0)
 
 class Const(Term):
@@ -253,8 +253,10 @@ class Prop:
         yield from iter(self.lhs)
         yield from iter(self.rhs)
     
-    def isconst(self):
-        return not any(isinstance(term, (Var, Unk)) for term in self)
+    # def isrefl(self):
+    #     return self.lhs == self.rhs
+    # def isconst(self):
+    #     return not any(isinstance(term, (Var, Unk)) for term in self)
     def hasvar(self):
         return any(isinstance(term, Var) for term in self)
     def hasunk(self):
@@ -264,6 +266,9 @@ class Eq(Prop):
     """Equality (=) propositions"""
     def __init__(self, lhs, rhs):
         super().__init__(lhs, rhs)
+    
+    def rev(self):
+        return Eq(self.rhs, self.lhs)
 
 class Le(Prop):
     """Inquality (<=) propositions"""

@@ -1,4 +1,5 @@
-from nodes import *
+from math_objects import *
+from deduction import deduce
 
 class Problem:
     """Problem statement"""
@@ -42,7 +43,7 @@ class Solution:
         self.history = [
             f"we will prove for all {', '.join(str(var) for var in self.vars)}:",
             str(self.goals[0]),
-            *(f"assuming: {str(fact)}" for fact in self.facts),
+            *(f"assuming: {fact}" for fact in self.facts),
             "here we go!"
         ]
     
@@ -57,13 +58,15 @@ class Solution:
         out += str(self.goals[0])
         out += '\n\033[4m' + 'Alternative goals:' + '\033[0m\n'
         out += '\n'.join(str(goal) for goal in self.goals[1:]) if self.goals[1:] else 'None'
+        out += '\n\033[4m' + 'Solved?' + '\033[0m\n'
+        out += str(self.issolved())
         return out
 
     def print_history(self):
         for line in self.history:
             print(line)
     
-    def add_history(self, message: str|list = ''):
+    def add_history(self, message: str | list = ''):
         assert isinstance(message, (str, list, tuple)), "Solution.add_history() takes str or list"
         if message:
             if isinstance(message, str):
@@ -99,6 +102,20 @@ class Solution:
             self.add_history(message)
             return True
         return False
+    
+    def issolved(self):
+        for goal in self.goals:
+            if goal in self.facts:
+                return True
+        return False
 
     def deduce(self):
-        pass
+        deduce(self)
+
+s1 = Solution(Problem(Le(0, Var('a')**2 + Var('b')**2)))
+s1.deduce()
+print(s1)
+s1.add_term(Var('a')**2)
+s1.add_term(Var('b')**2)
+s1.deduce()
+print(s1)
