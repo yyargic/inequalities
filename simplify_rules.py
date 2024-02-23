@@ -57,6 +57,9 @@ rules_eval = (
     Simplify(Unk_Const('X') / Unk_Const('Y'), lambda t: Const(t.args[0].value / t.args[1].value)),
     Simplify(Pow(Unk_Const('X'), Unk_Const('Y')), lambda t: Const(t.args[0].value ** t.args[1].value)),
     Simplify(Root(Unk_Const('X'), Unk_Const('Y')), lambda t: Const(t.args[0].value ** (1/t.args[1].value))),
+    # Subtraction or division with itself
+    Simplify(Unk('X') - Unk('X'), Const(0)),
+    Simplify(Unk('X') / Unk('X'), Const(1)),
 )
 
 rules_nest = (
@@ -87,4 +90,15 @@ rules_nest = (
     Simplify(Root(Root(Unk('X'), Unk('Y')), Unk('Z')), Root(Unk('X'), Unk('Y') * Unk('Z'))),
 )
 
-simplify_rules_all = rules_syntax + rules_eval + rules_nest
+rules_compact = (
+    # Collect multiple occurences in addition
+    Simplify(lambda t: t.isinstance_add() and any(t.args.count(arg) > 1 for arg in t.args),
+             lambda t: Add(*(arg if count==1 else Mul(count, arg) for arg, count in
+                             [(arg, t.args.count(arg)) for idx, arg in enumerate(t.args) if idx == t.args.index(arg)]))),
+    # Collect multiple occurences in multiplication
+    Simplify(lambda t: t.isinstance_mul() and any(t.args.count(arg) > 1 for arg in t.args),
+             lambda t: Mul(*(arg if count==1 else Pow(arg, count) for arg, count in
+                             [(arg, t.args.count(arg)) for idx, arg in enumerate(t.args) if idx == t.args.index(arg)]))),
+)
+
+simplify_rules_all = rules_syntax + rules_eval + rules_nest + rules_compact
