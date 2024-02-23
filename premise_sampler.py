@@ -22,11 +22,14 @@ def sample_terms(vars: list[Var], num_iter=1):
         elif op in ('Pow', 'Root'):
             args = choices(terms, weights=weights, k=1) + choices(powers, k=1)
         term = Op(op, *args)
-        term = simplify(term)
-        if term not in terms:
+        try:
+            term = simplify(term)
+        except:
+            continue
+        if (term not in terms) and term.hasvar():
             terms.append(term)
             weights.append(10)
     for term in terms:
         print(term)
-                
+
 sample_terms([Var('a'), Var('b'), Var('c')], 10)
